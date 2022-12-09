@@ -1,0 +1,11 @@
+name: cryo-et-sample-data
+display_name: cryo-ET sample data
+contributions:
+  commands:
+    - id: cryo-et-sample-data.make_sample_data
+      python_name: cryo_et_sample_data._sample_data:make_sample_data
+      title: Load sample data from cryo-ET sample data
+  sample_data:
+    - command: cryo-et-sample-data.make_sample_data
+      display_name: cryo-ET sample data
+      key: unique_id.1
