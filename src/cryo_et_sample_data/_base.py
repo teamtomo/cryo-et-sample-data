@@ -79,24 +79,28 @@ class DataSet:
         return cls(**config_dict)
 
     def _string_representation(self) -> str:
+        indent = "    "
         result = "cryoET DataSet\n"
 
-        result += f"\tname: {self.name}\n"
-        result += f"\tauthor: {self.author}\n"
-        result += f"\tbase url: {self.base_url}\n"
+        result += f"{indent}name: {self.name}\n"
+        result += f"{indent}author: {self.author}\n"
+        result += f"{indent}base url: {self.base_url}\n"
 
         description_wrapped = textwrap.wrap(self.description)
-        result += "\n\tDescription:\n\t  "
-        result += "\n\t  ".join(description_wrapped) + "\n"
+        result += f"\n{indent}Description:\n{indent}{indent}"
+        result += f"\n{indent}{indent}".join(description_wrapped) + "\n"
 
-        result += "\n\tdata\n"
+        result += f"\n{indent}data\n"
 
         if self._config.tomogram is not None:
-            result += "\t  └── tomogram\n"
+            result += f"{indent}  └── tomogram\n"
             result += (
-                f"\t\t  ├── file name: {self._config.tomogram.file_name}\n"
+                f"{2*indent}  ├── file name: "
+                f"{self._config.tomogram.file_name}\n"
             )
-            result += f"\t\t  └── checksum: {self._config.tomogram.checksum}\n"
+            result += (
+                f"{2*indent}  └── checksum: {self._config.tomogram.checksum}\n"
+            )
 
         return result
 
