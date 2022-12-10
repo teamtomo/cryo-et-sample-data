@@ -1,14 +1,6 @@
 import mrcfile
-import numpy as np
 
 from cryo_et_sample_data._base import DataSet
-
-
-def mrc_reader(file_path: str) -> np.ndarray:
-    with mrcfile.open(file_path) as mrc:
-        tomogram = mrc.data.copy()
-    return tomogram
-
 
 dataset_description = (
     "3D reconstruction of HIV virus-like particles from cryo-electron"
@@ -23,7 +15,7 @@ hiv_config = {
     "tomogram": {
         "file_name": "01_10.00Apx.mrc",
         "checksum": "md5:426325d006fe04276ea01df9d83ad510",
-        "reader": mrc_reader,
+        "reader": mrcfile.read,
     },
 }
 
