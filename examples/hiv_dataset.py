@@ -1,4 +1,4 @@
-from cryo_et_sample_data._hiv import hiv
+from cryo_et_sample_data import hiv
 
 print(hiv)
 
