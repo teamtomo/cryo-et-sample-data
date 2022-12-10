@@ -26,6 +26,7 @@ class DataSetConfig(BaseModel):
     name: str
     base_url: str
     author: str
+    description: str
     tomogram: Optional[DataItem] = None
 
     @validator("tomogram", pre=True)

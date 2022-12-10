@@ -10,9 +10,15 @@ def mrc_reader(file_path: str) -> np.ndarray:
     return tomogram
 
 
+dataset_description = (
+    "3D reconstruction of HIV virus-like particles from cryo-electron"
+    "tomography data in EMPIAR-10164 and associated particle poses."
+)
+
 hiv_config = {
     "name": "hiv",
     "author": "Alister Burt",
+    "description": dataset_description,
     "base_url": "doi:10.5281/zenodo.6504891/",
     "tomogram": {
         "file_name": "01_10.00Apx.mrc",

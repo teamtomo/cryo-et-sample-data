@@ -1,4 +1,5 @@
 import os
+import textwrap
 from typing import Any, Dict
 
 import numpy as np
@@ -24,11 +25,16 @@ class DataSet:
         self,
         name: str,
         author: str,
+        description: str,
         base_url: str,
         tomogram: DataItem,
     ):
         self._config = DataSetConfig(
-            name=name, author=author, base_url=base_url, tomogram=tomogram
+            name=name,
+            author=author,
+            description=description,
+            base_url=base_url,
+            tomogram=tomogram,
         )
 
         registry_dict = build_registry_dict_from_config(self._config)
@@ -50,6 +56,10 @@ class DataSet:
     @property
     def author(self) -> str:
         return self._config.author
+
+    @property
+    def description(self) -> str:
+        return self._config.description
 
     def _get_data(self, data_name: str) -> str:
         data_item: DataItem = getattr(self._config, data_name)
@@ -74,6 +84,11 @@ class DataSet:
         result += f"\tname: {self.name}\n"
         result += f"\tauthor: {self.author}\n"
         result += f"\tbase url: {self.base_url}\n"
+
+        description_wrapped = textwrap.wrap(self.description)
+        result += "\n\tDescription:\n\t  "
+        result += "\n\t  ".join(description_wrapped) + "\n"
+
         result += "\n\tdata\n"
 
         if self._config.tomogram is not None:
