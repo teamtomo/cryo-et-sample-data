@@ -87,7 +87,7 @@ class DataSet:
         result += f"{indent}base url: {self.base_url}\n"
 
         description_wrapped = textwrap.wrap(self.description)
-        result += f"\n{indent}Description:\n{indent}{indent}"
+        result += f"\n{indent}description:\n{indent}{indent}"
         result += f"\n{indent}{indent}".join(description_wrapped) + "\n"
 
         result += f"\n{indent}data\n"
