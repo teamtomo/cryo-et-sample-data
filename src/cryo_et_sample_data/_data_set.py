@@ -1,11 +1,12 @@
 import os
-import textwrap
 from typing import Any, Callable, Dict, Optional
 
 import numpy as np
 import pooch
 from pooch import Pooch
 from pydantic import BaseModel, Field, PrivateAttr, validator
+
+from cryo_et_sample_data.utils import word_wrap_with_line_breaks
 
 
 class FileMetadata(BaseModel):
@@ -185,9 +186,12 @@ class DataSet(BaseModel):
         result += f"{indent}author: {self.author}\n"
         result += f"{indent}base url: {self.base_url}\n"
 
-        description_wrapped = textwrap.wrap(self.description)
-        result += f"\n{indent}description:\n{indent}{indent}"
-        result += f"\n{indent}{indent}".join(description_wrapped) + "\n"
+        description_wrapped = word_wrap_with_line_breaks(
+            self.description,
+            paragraph_width=60,
+        )
+        result += f"\n{indent}description:\n{2*indent}"
+        result += f"\n{2*indent}".join(description_wrapped) + "\n"
 
         result += f"\n{indent}data\n"
 
