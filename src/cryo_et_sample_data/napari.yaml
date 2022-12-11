@@ -2,10 +2,10 @@ name: cryo-et-sample-data
 display_name: cryo-ET sample data
 contributions:
   commands:
-    - id: cryo-et-sample-data.make_sample_data
-      python_name: cryo_et_sample_data._sample_data:make_sample_data
-      title: Load sample data from cryo-ET sample data
+    - id: cryo-et-sample-data.hiv_tomogram
+      python_name: cryo_et_sample_data._hiv:_hiv_sample_tomogram
+      title: Load HIV tomogram
   sample_data:
-    - command: cryo-et-sample-data.make_sample_data
-      display_name: cryo-ET sample data
+    - command: cryo-et-sample-data.hiv_tomogram
+      display_name: HIV virus-like particle tomogram
       key: unique_id.1

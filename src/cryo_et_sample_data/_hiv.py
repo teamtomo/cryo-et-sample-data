@@ -1,6 +1,7 @@
 """Immature HIV-1 virus-like particle data from EMPIAR-10164.
 
-This dataset contains a tomogram reconstructed from data available in EMPIAR-10164.
+This dataset contains a tomogram reconstructed from
+data available in EMPIAR-10164.
 """
 
 import mrcfile
@@ -20,3 +21,24 @@ hiv_config = {
 }
 
 hiv = DataSet.from_dict(hiv_config)
+
+
+def _hiv_sample_tomogram():
+    """napari sample data function for hiv virus-like particles tomogram.
+
+    Returns
+    -------
+    layer_data : List[LayerDataTuple]
+        The data for the layers to be constructed.
+        The LayerDataTuple has the following elements:
+            - tomogram: the image
+            - layer_kwargs: the keyword arguments passed to the
+              napari add_image() method.
+            - "image" the type of the layer
+    """
+    tomogram = hiv.tomogram
+
+    # keyword arguments for Viewer.add_image()
+    layer_kwargs = {"name": "HIV tomogram", "colormap": "gray_r"}
+
+    return [(tomogram, layer_kwargs, "image")]
