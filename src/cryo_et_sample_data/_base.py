@@ -1,25 +1,80 @@
 import os
 import textwrap
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Optional
 
 import numpy as np
 import pooch
 from pooch import Pooch
-
-from cryo_et_sample_data.utils import DataItem, DataSetConfig
-
-
-def build_registry_dict_from_config(data: DataSetConfig) -> Dict[str, str]:
-    registry = dict()
-
-    if data.tomogram is not None:
-        registry[data.tomogram.file_name] = data.tomogram.checksum
-
-    return registry
+from pydantic import BaseModel, Field, PrivateAttr, validator
 
 
-class DataSet:
-    _CACHE_BASE_PATH: str = "cryo_et_sample_data"
+class FileMetadata(BaseModel):
+    """Metadata for a piece of data in a DataSet.
+
+    Note: all fields are immutable.
+
+    Attributes
+    ----------
+    file_name : str
+        The file name for the data. The file should
+        be findable at base_url/file_name
+    checksum : str
+        The checksum for the datum.
+    reader : Callable
+        The function used to load the data from disk.
+    """
+
+    file_name: str = Field(allow_mutation=False)
+    checksum: str = Field(allow_mutation=False)
+    reader: Callable = Field(allow_mutation=False)
+
+    class Config:
+        """validate assignments to make fields immutable"""
+
+        validate_assignment = True
+
+
+class DataSet(BaseModel):
+    """A lazy, cached downloader for a set of tomography data.
+
+    Currently supported data:
+        - tomogram: the reconstructed image.
+
+    Attributes
+    ----------
+    name : str
+        The name of the DataSet. Spaces are not allowed.
+    base_url : str
+        The url to access the dataset. See the pooch
+        documentation for the valid formats.
+    author : str
+        The author(s) of the dataset.
+    description : str
+        A description of the dataset. This should be
+        a contiuous string without line breaks. The
+        DataSet class will automatically apply word
+        wrapping.
+    tomogram_metadata : Optional[FileMetadata]
+        The metadata for the tomogram dataset.
+        If None, no tomogram is included.
+        Default value is None.
+    """
+
+    name: str = Field(allow_mutation=False)
+    base_url: str = Field(allow_mutation=False)
+    author: str = Field(allow_mutation=False)
+    description: str = Field(allow_mutation=False)
+    tomogram_metadata: Optional[FileMetadata] = Field(
+        None, allow_mutation=False
+    )
+
+    _registry: Pooch = PrivateAttr()
+    _CACHE_BASE_PATH: str = PrivateAttr("cryo_et_sample_data")
+
+    class Config:
+        """validate assignments to make fields immutable"""
+
+        validate_assignment = True
 
     def __init__(
         self,
@@ -27,17 +82,19 @@ class DataSet:
         author: str,
         description: str,
         base_url: str,
-        tomogram: DataItem,
+        tomogram_metadata: Optional[FileMetadata],
     ):
-        self._config = DataSetConfig(
+        # parse the input
+        super().__init__(
             name=name,
             author=author,
             description=description,
             base_url=base_url,
-            tomogram=tomogram,
+            tomogram_metadata=tomogram_metadata,
         )
 
-        registry_dict = build_registry_dict_from_config(self._config)
+        # make the pooch registry
+        registry_dict = self._build_registry_dict()
         cache_path = os.path.join(self._CACHE_BASE_PATH, name)
         self._registry: Pooch = pooch.create(
             path=pooch.os_cache(cache_path),
@@ -46,39 +103,81 @@ class DataSet:
         )
 
     @property
-    def name(self) -> str:
-        return self._config.name
+    def tomogram(self) -> np.ndarray:
+        """The tomogram image.
 
-    @property
-    def base_url(self) -> str:
-        return self._config.base_url
+        If no tomogram image is included in the dataset,
+        this raises a NotImplementedError.
 
-    @property
-    def author(self) -> str:
-        return self._config.author
-
-    @property
-    def description(self) -> str:
-        return self._config.description
+        Returns
+        -------
+        tomogram : np.ndarray
+            The tomogram image.
+        """
+        tomogram_path = self._get_data("tomogram")
+        return self.tomogram_metadata.reader(tomogram_path)
 
     def _get_data(self, data_name: str) -> str:
-        data_item: DataItem = getattr(self._config, data_name)
+        """Download a given datum (if not cached) and return
+        the file path to the data.
+
+        If the datum is not present in this dataset, this
+        raises a NotImplementedError.
+
+        Parameters
+        ----------
+        data_name : str
+            The name of the data to fetch.
+
+        Returns
+        -------
+        file_path : str
+            The path to the downloaded file.
+        """
+        data_item: FileMetadata = getattr(self, f"{data_name}_metadata")
         if data_item is None:
             raise NotImplementedError(
                 f"{self.__class__.__name__} doesn't have a {data_name}"
             )
         return self._registry.fetch(data_item.file_name, progressbar=True)
 
-    @property
-    def tomogram(self) -> np.ndarray:
-        tomogram_path = self._get_data("tomogram")
-        return self._config.tomogram.reader(tomogram_path)
-
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]):
+        """Convenience method to construct from a dictionary."""
         return cls(**config_dict)
 
+    def _build_registry_dict(self) -> Dict[str, str]:
+        """Build the pooch data registry dictionary from
+        the model fields.
+
+        Returns
+        -------
+        registry : Dict[str, str]
+            The pooch registry dictionary where the keys
+            are the file name and the values are the checksum.
+        """
+        registry = dict()
+
+        if self.tomogram_metadata is not None:
+            registry[
+                self.tomogram_metadata.file_name
+            ] = self.tomogram_metadata.checksum
+
+        return registry
+
+    @validator("tomogram_metadata", pre=True)
+    @classmethod
+    def _coerce_data_item(cls, v):
+        """Coerce a DataItem field to the correct type"""
+        if isinstance(v, dict):
+            return FileMetadata(**v)
+        else:
+            return v
+
     def _string_representation(self) -> str:
+        """Construct the string representation of the DataSet.
+        This is used by the __str__ and __repr__ methods
+        """
         indent = "    "
         result = "cryoET DataSet\n"
 
@@ -92,17 +191,21 @@ class DataSet:
 
         result += f"\n{indent}data\n"
 
-        if self._config.tomogram is not None:
+        if self.tomogram_metadata is not None:
             result += f"{indent}  └── tomogram\n"
             result += (
                 f"{2*indent}  ├── file name: "
-                f"{self._config.tomogram.file_name}\n"
+                f"{self.tomogram_metadata.file_name}\n"
             )
             result += (
-                f"{2*indent}  └── checksum: {self._config.tomogram.checksum}\n"
+                f"{2*indent}  └── checksum: "
+                f"{self.tomogram_metadata.checksum}\n"
             )
 
         return result
+
+    def __repr__(self) -> str:
+        return self._string_representation()
 
     def __str__(self) -> str:
         return self._string_representation()
