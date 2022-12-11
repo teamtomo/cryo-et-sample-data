@@ -71,6 +71,10 @@ def test_data_set():
             file_name="new.zarr", checksum="123", reader=mrcfile.read
         )
 
+    # repr and str should be the same
+    assert str(data_set) == data_set._string_representation()
+    assert str(data_set) == data_set.__repr__()
+
 
 def test_data_set_from_dictionary():
     data_set = DataSet.from_dict(test_config_dict)
