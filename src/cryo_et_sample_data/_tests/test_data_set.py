@@ -27,7 +27,7 @@ def test_invalid_file_metadata_reader():
         _ = FileMetadata(
             file_name="test.zarr",
             checksum="mic_check_one_two",
-            reader="mrcfile.read",
+            reader="not a callable",
         )
 
 
