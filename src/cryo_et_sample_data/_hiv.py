@@ -1,6 +1,6 @@
 import mrcfile
 
-from cryo_et_sample_data._base import DataSet
+from cryo_et_sample_data._data_set import DataSet
 
 dataset_description = (
     "3D reconstruction of HIV virus-like particles from cryo-electron"

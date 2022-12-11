@@ -141,11 +141,6 @@ class DataSet(BaseModel):
             )
         return self._registry.fetch(data_item.file_name, progressbar=True)
 
-    @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]):
-        """Convenience method to construct from a dictionary."""
-        return cls(**config_dict)
-
     def _build_registry_dict(self) -> Dict[str, str]:
         """Build the pooch data registry dictionary from
         the model fields.
@@ -165,8 +160,13 @@ class DataSet(BaseModel):
 
         return registry
 
+    @validator("name", pre=True)
+    def _check_for_spaces_in_name(cls, v):
+        if " " in v:
+            raise ValueError("spaces are not allowed in name")
+        return v
+
     @validator("tomogram_metadata", pre=True)
-    @classmethod
     def _coerce_data_item(cls, v):
         """Coerce a DataItem field to the correct type"""
         if isinstance(v, dict):
@@ -209,3 +209,8 @@ class DataSet(BaseModel):
 
     def __str__(self) -> str:
         return self._string_representation()
+
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]):
+        """Convenience method to construct from a dictionary."""
+        return cls(**config_dict)
