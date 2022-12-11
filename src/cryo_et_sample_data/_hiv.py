@@ -3,6 +3,7 @@
 This dataset contains a tomogram reconstructed from
 data available in EMPIAR-10164.
 """
+from typing import List
 
 import mrcfile
 
@@ -23,7 +24,7 @@ hiv_config = {
 hiv = DataSet.from_dict(hiv_config)
 
 
-def _hiv_sample_tomogram():
+def _hiv_sample_tomogram() -> List["LayerDataTuple"]:  # noqa: F821
     """napari sample data function for hiv virus-like particles tomogram.
 
     Returns
