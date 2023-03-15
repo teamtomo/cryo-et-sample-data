@@ -193,7 +193,7 @@ class DataSet(BaseModel):
             raise ValueError("spaces are not allowed in name")
         return v
 
-    @validator("tomogram_metadata", pre=True)
+    @validator("tomogram_metadata", "label_metadata", pre=True)
     def _coerce_data_item(cls, v):
         """Coerce a DataItem field to the correct type"""
         if isinstance(v, dict):
