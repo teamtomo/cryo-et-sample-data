@@ -88,8 +88,8 @@ class DataSet(BaseModel):
         author: str,
         description: str,
         base_url: str,
-        tomogram_metadata: Optional[FileMetadata],
-        label_metadata: Optional[FileMetadata],
+        tomogram_metadata: Optional[FileMetadata] = None,
+        label_metadata: Optional[FileMetadata] = None,
     ):
         # parse the input
         super().__init__(
