@@ -59,6 +59,10 @@ class DataSet(BaseModel):
         The metadata for the tomogram dataset.
         If None, no tomogram is included.
         Default value is None.
+    label_metadata : Optional[FileMetadata]
+        The metadata for the label image. If None,
+        no label data is included.
+        Default value is None.
     """
 
     name: str = Field(allow_mutation=False)
@@ -68,6 +72,7 @@ class DataSet(BaseModel):
     tomogram_metadata: Optional[FileMetadata] = Field(
         None, allow_mutation=False
     )
+    label_metadata: Optional[FileMetadata] = Field(None, allow_mutation=False)
 
     _registry: Pooch = PrivateAttr()
     _CACHE_BASE_PATH: str = PrivateAttr("cryo_et_sample_data")
@@ -84,6 +89,7 @@ class DataSet(BaseModel):
         description: str,
         base_url: str,
         tomogram_metadata: Optional[FileMetadata],
+        label_metadata: Optional[FileMetadata],
     ):
         # parse the input
         super().__init__(
@@ -92,6 +98,7 @@ class DataSet(BaseModel):
             description=description,
             base_url=base_url,
             tomogram_metadata=tomogram_metadata,
+            label_metadata=label_metadata,
         )
 
         # make the pooch registry
@@ -117,6 +124,21 @@ class DataSet(BaseModel):
         """
         tomogram_path = self._get_data("tomogram")
         return self.tomogram_metadata.reader(tomogram_path)
+
+    @property
+    def label(self) -> np.ndarray:
+        """The label image.
+
+        If no label image is included in the dataset,
+        this raises a NotImplementedError.
+
+        Returns
+        -------
+        label : np.ndarray
+            The label image.
+        """
+        label_path = self._get_data("label")
+        return self.label_metadata.reader(label_path)
 
     def _get_data(self, data_name: str) -> str:
         """Download a given datum (if not cached) and return
@@ -157,6 +179,10 @@ class DataSet(BaseModel):
         if self.tomogram_metadata is not None:
             registry[
                 self.tomogram_metadata.file_name
+            ] = self.tomogram_metadata.checksum
+        if self.label_metadata is not None:
+            registry[
+                self.label_metadata.file_name
             ] = self.tomogram_metadata.checksum
 
         return registry
